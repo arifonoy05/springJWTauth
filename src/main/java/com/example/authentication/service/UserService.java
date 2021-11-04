@@ -1,19 +1,25 @@
 package com.example.authentication.service;
 
+import com.example.authentication.configuration.CustomUserDetails;
 import com.example.authentication.domain.Role;
 import com.example.authentication.domain.User;
 import com.example.authentication.repository.RoleRepository;
 import com.example.authentication.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
     @Autowired private UserRepository userRepository;
     @Autowired private RoleRepository roleRepository;
+    @Autowired private BCryptPasswordEncoder passwordEncoder;
 
     public List<User> getAllUsers(){
         return userRepository.findAll();
@@ -31,6 +37,7 @@ public class UserService {
 
     public User saveUser(User user){
         addDefaultRole(user);
+        user.setPassword(encryptPassword(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -49,7 +56,7 @@ public class UserService {
         );
 
         existingUser.setName(user.getName());
-        existingUser.setPassword(user.getPassword());
+        existingUser.setPassword(encryptPassword(user.getPassword()));
         existingUser.setEmail(user.getEmail());
 //        existingUser.setRoles(user.getRoles());
 
@@ -61,13 +68,17 @@ public class UserService {
         user.addRole(defaultRole);
     }
 
+    public String encryptPassword(String pass){
+        return passwordEncoder.encode(pass);
+    }
+
     public void addInitialsOnStartUp(){
         Role adminRole = new Role();
         adminRole.setName("ADMIN");
 
         User adminUser = new User();
         adminUser.setName("admin");
-        adminUser.setPassword("admin123");
+        adminUser.setPassword(encryptPassword("admin123"));
         adminUser.setEmail("admin@gg.gg");
         adminUser.addRole(adminRole);
         userRepository.save(adminUser);
@@ -75,5 +86,15 @@ public class UserService {
         Role userRole = new Role();
         userRole.setName("USER");
         roleRepository.save(userRole);
+    }
+
+    public List<String> listUserRoles(User user){
+        return user.getRoleNames();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByName(username);
+        return new CustomUserDetails(user);
     }
 }

@@ -28,6 +28,12 @@ public class UserController {
         return userService.findById(id);
     }
 
+    @GetMapping("/id/{id}/roles")
+    public List<String> getUserRoles(@PathVariable(value = "id") Long id){
+        User user = userService.findById(id);
+        return userService.listUserRoles(user);
+    }
+
     @GetMapping("/name/{name}")
     public User findByName(@PathVariable(value = "name") String name){
         return userService.findByName(name);

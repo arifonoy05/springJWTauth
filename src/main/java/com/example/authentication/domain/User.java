@@ -5,7 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity @Table(name = "users")
@@ -26,6 +28,14 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role")
     )
     private Set<Role> roles = new HashSet<>();
+
+    public List<String> getRoleNames(){
+        List<String> rolesList = new ArrayList<>();
+        this.roles.forEach(role -> {
+            rolesList.add(role.getName());
+        });
+        return rolesList;
+    }
 
     public void addRole(Role role){
         this.roles.add(role);
